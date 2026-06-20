@@ -784,32 +784,42 @@ body {
   display: none !important;
 }
 
-/* ═══════ RESPONSIVE / MOBILE SYSTEM ═══════ */
+/* ═══════════════════════════════════════════════
+   RESPONSIVE / MOBILE SYSTEM
+   ═══════════════════════════════════════════════ */
+
+/* ── Hamburger toggle button ── */
 .sidebar-toggle-btn {
   display: none;
   background: none;
-  border: none;
+  border: 1px solid var(--border-color);
+  border-radius: 8px;
   color: var(--text-primary);
-  font-size: 22px;
+  font-size: 20px;
   cursor: pointer;
-  padding: 4px;
+  padding: 5px 8px;
   margin-right: var(--spacing-sm);
   align-items: center;
   justify-content: center;
-  transition: color 0.2s;
+  transition: color 0.2s, border-color 0.2s, background 0.2s;
+  flex-shrink: 0;
 }
 .sidebar-toggle-btn:hover {
   color: var(--lane-t);
+  border-color: var(--lane-t);
+  background: rgba(34, 211, 238, 0.06);
 }
 
+/* ── Sidebar overlay backdrop ── */
 .sidebar-backdrop {
   position: fixed;
   top: 0;
   left: 0;
   width: 100vw;
   height: 100vh;
-  background: rgba(4, 6, 10, 0.7);
-  backdrop-filter: blur(4px);
+  background: rgba(4, 6, 10, 0.75);
+  backdrop-filter: blur(6px);
+  -webkit-backdrop-filter: blur(6px);
   z-index: 99;
   opacity: 0;
   pointer-events: none;
@@ -820,71 +830,271 @@ body {
   pointer-events: auto;
 }
 
-/* Tablet & Mobile Viewports */
-@media (max-width: 1024px) {
+/* ════════════════════════════════════════
+   TABLET  (≤ 1200px)
+   ════════════════════════════════════════ */
+@media (max-width: 1200px) {
   .app-container {
-    grid-template-columns: 1fr;
+    grid-template-columns: 240px 1fr;
+  }
+  .analysis-dashboard {
+    grid-template-columns: 260px 1fr 260px;
+  }
+}
+
+/* ════════════════════════════════════════
+   TABLET PORTRAIT / LARGE PHONE  (≤ 1024px)
+   Sidebar becomes a slide-in drawer
+   ════════════════════════════════════════ */
+@media (max-width: 1024px) {
+  /* Body scrollable on mobile */
+  body {
+    overflow: auto;
+    height: auto;
   }
 
+  /* Full-width single-column layout */
+  .app-container {
+    grid-template-columns: 1fr;
+    height: auto;
+    min-height: 100vh;
+  }
+
+  /* Show hamburger */
   .sidebar-toggle-btn {
     display: flex;
   }
 
+  /* Sidebar: off-screen drawer */
   .sidebar {
     position: fixed;
     top: 0;
-    left: -290px;
-    width: 280px;
+    left: 0;
+    width: 290px;
     height: 100vh;
     z-index: 100;
-    transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-    box-shadow: 4px 0 24px rgba(0, 0, 0, 0.6);
+    transform: translateX(-100%);
+    transition: transform 0.32s cubic-bezier(0.4, 0, 0.2, 1);
+    box-shadow: 6px 0 32px rgba(0, 0, 0, 0.7);
+    overflow-y: auto;
   }
   .sidebar.open {
-    transform: translateX(290px);
+    transform: translateX(0);
   }
 
+  /* Main fills full width */
+  .main-content {
+    grid-template-rows: auto 1fr auto auto;
+    height: auto;
+    overflow: visible;
+  }
+
+  /* Chart section: fixed height so it stays visible */
+  .chart-section {
+    height: 350px;
+    min-height: 300px;
+  }
+
+  /* Analysis dashboard: stack all 3 cards vertically */
   .analysis-dashboard {
     grid-template-columns: 1fr;
-    max-height: 200px;
-    overflow-y: auto;
+    max-height: none;
+    overflow: visible;
   }
 
   .dashboard-card {
     border-right: none;
     border-bottom: 1px solid var(--border-color);
+    min-height: 160px;
   }
   .dashboard-card:last-child {
     border-bottom: none;
   }
+
+  /* 4-lane grid: 2 × 2 stays on tablet */
+  .lanes-grid {
+    grid-template-columns: 1fr 1fr;
+    grid-template-rows: auto auto;
+  }
+
+  /* Verdict signal slightly smaller */
+  .verdict-signal {
+    font-size: 34px;
+  }
+
+  /* Trade metrics: 2 cols */
+  .trade-metrics-grid {
+    grid-template-columns: 1fr 1fr;
+  }
+
+  /* Footer wraps */
+  .footer {
+    padding: var(--spacing-sm) var(--spacing-md);
+    height: auto;
+  }
 }
 
-/* Narrow Mobile Viewports */
+/* ════════════════════════════════════════
+   MOBILE  (≤ 768px)
+   ════════════════════════════════════════ */
 @media (max-width: 768px) {
+  /* ── Ticker bar ── */
   .ticker-bar {
     flex-wrap: wrap;
+    row-gap: 6px;
     height: auto;
-    min-height: 60px;
+    min-height: 56px;
     padding: var(--spacing-sm) var(--spacing-md);
+  }
+  .ticker-info h2 {
+    font-size: 16px;
+  }
+  .price-display {
+    font-size: 16px;
   }
   .ticker-stats {
     width: 100%;
-    justify-content: space-between;
-    margin-top: 6px;
-    gap: var(--spacing-sm);
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 6px;
+    margin-top: 0;
   }
-  .main-content {
-    grid-template-rows: auto 1fr auto 28px;
-  }
-  .lanes-grid {
-    grid-template-columns: 1fr;
-    grid-template-rows: auto;
+  .fear-greed-box {
+    /* Show as 4th item in 3-col grid — it wraps to second row */
+    grid-column: span 1;
   }
   .stat-box {
     align-items: center;
+    background: var(--bg-primary);
+    border: 1px solid var(--border-color);
+    border-radius: 6px;
+    padding: 4px 6px;
   }
-  .fear-greed-box {
-    display: none; /* Hide on very small mobile to prevent wrapping cluster */
+
+  /* ── Chart ── */
+  .chart-section {
+    height: 280px;
+    min-height: 240px;
+  }
+
+  /* ── Analysis dashboard ── */
+  .analysis-dashboard {
+    grid-template-columns: 1fr;
+    max-height: none;
+    overflow: visible;
+    border-top: 1px solid var(--border-color);
+  }
+
+  .dashboard-card {
+    min-height: auto;
+    padding: var(--spacing-sm) var(--spacing-md);
+  }
+
+  /* ── Verdict card ── */
+  .verdict-signal {
+    font-size: 28px;
+  }
+  .trade-metrics-grid {
+    grid-template-columns: 1fr 1fr;
+    gap: 4px;
+  }
+  .trade-metric .metric-value {
+    font-size: 11px;
+  }
+
+  /* ── 4 Lanes: full single column ── */
+  .lanes-grid {
+    grid-template-columns: 1fr;
+    grid-template-rows: auto;
+    gap: 6px;
+  }
+  .lane-card {
+    padding: 8px 10px;
+    flex-direction: row;
+    align-items: center;
+    gap: 10px;
+  }
+  .lane-header {
+    flex-shrink: 0;
+  }
+  .lane-bias {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 2px;
+  }
+  .lane-detail {
+    flex: 1;
+    font-size: 8px;
+  }
+
+  /* ── Metrics table ── */
+  .metrics-table { font-size: 10px; }
+
+  /* ── Tabs ── */
+  .tabs-header .tab-btn {
+    font-size: 10px;
+    padding: 3px 6px;
+  }
+
+  /* ── Footer ── */
+  .footer {
+    padding: var(--spacing-sm) var(--spacing-md);
+    height: auto;
+    min-height: 28px;
+  }
+  .footer p {
+    font-size: 8px;
+    line-height: 1.4;
+  }
+
+  /* ── Main content row sizing ── */
+  .main-content {
+    grid-template-rows: auto auto auto auto;
+    height: auto;
+    overflow: visible;
   }
 }
 
+/* ════════════════════════════════════════
+   SMALL PHONE  (≤ 480px)
+   ════════════════════════════════════════ */
+@media (max-width: 480px) {
+  .ticker-stats {
+    grid-template-columns: 1fr 1fr;
+  }
+  .fear-greed-box {
+    grid-column: span 2;
+    display: flex;
+    flex-direction: row;
+    justify-content: space-between;
+  }
+  .ticker-info {
+    gap: var(--spacing-sm);
+  }
+  .ticker-info h2 {
+    font-size: 14px;
+  }
+  .price-display {
+    font-size: 14px;
+  }
+  .verdict-signal {
+    font-size: 24px;
+  }
+  .chart-section {
+    height: 230px;
+    min-height: 200px;
+  }
+  .lanes-grid {
+    gap: 4px;
+  }
+  .lane-card {
+    padding: 6px 8px;
+  }
+  .rr-value {
+    font-size: 13px;
+  }
+  .sidebar-toggle-btn {
+    font-size: 18px;
+    padding: 4px 6px;
+  }
+}
