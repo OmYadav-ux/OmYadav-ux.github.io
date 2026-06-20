@@ -1,0 +1,328 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Crypto Chart Analyzer | 4-Lane Trading Intelligence</title>
+  <meta name="description" content="Real-time crypto trading intelligence with 4-lane market analysis. Detect signals before the market reacts.">
+  <!-- Global Error Handler -->
+  <script>
+    window.addEventListener('error', function(e) {
+      const errDiv = document.createElement('div');
+      errDiv.style.cssText = 'position:fixed;top:0;left:0;width:100vw;background:#ef4444;color:#fff;padding:20px;z-index:999999;font-family:monospace;font-size:14px';
+      errDiv.innerHTML = `<b>⚠️ Runtime Error</b><br>Message: ${e.message}<br>Source: ${e.filename}<br>Line: ${e.lineno}<pre style="margin-top:8px;background:rgba(0,0,0,0.2);padding:10px;border-radius:4px;font-size:12px">${e.error ? e.error.stack : ''}</pre>`;
+      document.body.appendChild(errDiv);
+    });
+    window.addEventListener('unhandledrejection', function(e) {
+      const errDiv = document.createElement('div');
+      errDiv.style.cssText = 'position:fixed;top:0;left:0;width:100vw;background:#f59e0b;color:#000;padding:20px;z-index:999999;font-family:monospace;font-size:14px';
+      errDiv.innerHTML = `<b>⚠️ Promise Rejection</b><br>Reason: ${e.reason}<pre style="margin-top:8px;background:rgba(0,0,0,0.2);padding:10px;border-radius:4px;font-size:12px">${e.reason?.stack || ''}</pre>`;
+      document.body.appendChild(errDiv);
+    });
+  </script>
+  <link rel="stylesheet" href="./style.css">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Outfit:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600;700&display=swap" rel="stylesheet">
+</head>
+<body>
+  <div class="app-container">
+    <!-- Sidebar Controls -->
+    <aside class="sidebar">
+      <div class="brand">
+        <span class="brand-logo">⚡</span>
+        <h1>Antigravity <span class="brand-accent">Trades</span></h1>
+      </div>
+
+      <div class="sidebar-section">
+        <h3>Watchlist</h3>
+        <div id="watchlist" class="watchlist-container">
+          <div class="loading-small">Loading symbols...</div>
+        </div>
+      </div>
+
+      <div class="sidebar-section">
+        <h3>Timeframe</h3>
+        <div id="timeframes" class="timeframe-container"></div>
+      </div>
+
+      <div class="sidebar-section">
+        <h3>Indicator Overlays</h3>
+        <div class="toggle-container">
+          <label class="toggle-switch">
+            <input type="checkbox" class="indicator-toggle" data-indicator="ema9" checked>
+            <span class="slider"></span>
+            <span class="label-text">EMA 9 <span class="indicator-color orange"></span></span>
+          </label>
+          <label class="toggle-switch">
+            <input type="checkbox" class="indicator-toggle" data-indicator="ema21" checked>
+            <span class="slider"></span>
+            <span class="label-text">EMA 21 <span class="indicator-color blue"></span></span>
+          </label>
+          <label class="toggle-switch">
+            <input type="checkbox" class="indicator-toggle" data-indicator="ema50">
+            <span class="slider"></span>
+            <span class="label-text">EMA 50 <span class="indicator-color purple"></span></span>
+          </label>
+          <label class="toggle-switch">
+            <input type="checkbox" class="indicator-toggle" data-indicator="ema200">
+            <span class="slider"></span>
+            <span class="label-text">EMA 200 <span class="indicator-color pink"></span></span>
+          </label>
+          <label class="toggle-switch">
+            <input type="checkbox" class="indicator-toggle" data-indicator="bbUpper" checked>
+            <span class="slider"></span>
+            <span class="label-text">Bollinger Bands <span class="indicator-color green-red"></span></span>
+          </label>
+        </div>
+      </div>
+
+      <div class="sidebar-section">
+        <h3>Risk Configuration</h3>
+        <div class="setting-slider">
+          <div class="slider-header">
+            <label for="atrMultiplier">ATR SL Multiplier</label>
+            <span id="atrMultiplierVal">1.5</span>
+          </div>
+          <input type="range" id="atrMultiplier" min="1.0" max="3.0" step="0.1" value="1.5">
+          <p class="slider-desc">Stop Loss distance based on market volatility.</p>
+        </div>
+        <div class="setting-slider">
+          <div class="slider-header">
+            <label for="riskRewardRatio">Risk : Reward (TP2)</label>
+            <span id="riskRewardRatioVal">2.0</span>
+          </div>
+          <input type="range" id="riskRewardRatio" min="1.0" max="4.0" step="0.1" value="2.0">
+          <p class="slider-desc">TP2 multiplier. TP1 is always 1:1.</p>
+        </div>
+      </div>
+
+      <div class="sidebar-section">
+        <h3>Alert Settings</h3>
+        <button id="btn-enable-notifications" class="action-btn">🔔 Enable Browser Alerts</button>
+        <div class="toggle-container" style="margin-top: 6px;">
+          <label class="toggle-switch">
+            <input type="checkbox" id="toggle-sound-alerts" checked>
+            <span class="slider"></span>
+            <span class="label-text">Audio Alerts</span>
+          </label>
+          <label class="toggle-switch">
+            <input type="checkbox" id="toggle-telegram-alerts">
+            <span class="slider"></span>
+            <span class="label-text">Telegram Alerts</span>
+          </label>
+        </div>
+        <div id="telegram-credentials" class="telegram-credentials hidden">
+          <input type="text" id="tg-token" placeholder="Bot Token" class="sidebar-input">
+          <input type="text" id="tg-chatid" placeholder="Chat ID" class="sidebar-input">
+          <button id="btn-test-telegram" class="action-btn secondary">Test Telegram</button>
+        </div>
+      </div>
+
+      <div class="connection-status">
+        <span class="status-indicator"></span>
+        <span class="status-text">Binance Live Feed Active</span>
+      </div>
+    </aside>
+
+    <!-- Main Terminal Area -->
+    <main class="main-content">
+      <!-- Top Ticker Bar -->
+      <header class="ticker-bar">
+        <div class="ticker-info">
+          <h2 id="header-symbol">BTC/USDT</h2>
+          <div class="price-display">
+            <span id="header-price" class="price-neutral">$0.00</span>
+          </div>
+        </div>
+        <div class="ticker-stats">
+          <div class="stat-box">
+            <span class="stat-label">Change</span>
+            <span id="header-change" class="stat-val change-up">--</span>
+          </div>
+          <div class="stat-box">
+            <span class="stat-label">High</span>
+            <span id="header-high" class="stat-val">--</span>
+          </div>
+          <div class="stat-box">
+            <span class="stat-label">Low</span>
+            <span id="header-low" class="stat-val">--</span>
+          </div>
+          <div class="stat-box fear-greed-box">
+            <span class="stat-label">Fear & Greed</span>
+            <span id="header-fng" class="stat-val fng-val">--</span>
+          </div>
+        </div>
+      </header>
+
+      <!-- Chart Window -->
+      <section class="chart-section">
+        <div id="chart-container" class="chart-container"></div>
+        <div id="loading" class="loading-overlay">
+          <div class="spinner"></div>
+          <p>Syncing 4-Lane Analysis...</p>
+        </div>
+      </section>
+
+      <!-- 4-Lane Analysis Dashboard -->
+      <section class="analysis-dashboard">
+        <!-- VERDICT CARD (Left) -->
+        <div class="dashboard-card verdict-card" id="verdict-card">
+          <div class="card-header">
+            <h3>Verdict</h3>
+            <span id="verdict-tier" class="tier-badge tier-low">LOW</span>
+          </div>
+          <div class="verdict-signal-wrapper">
+            <div id="verdict-signal" class="verdict-signal neutral">HOLD</div>
+            <div id="verdict-pair" class="verdict-pair">BTC/USDT · 1h</div>
+            <div id="verdict-alignment" class="verdict-alignment">0 / 4 lanes aligned</div>
+          </div>
+          <!-- Trade Metrics -->
+          <div class="trade-metrics-grid">
+            <div class="trade-metric">
+              <span class="metric-label">Entry</span>
+              <span id="setup-entry" class="metric-value">--</span>
+            </div>
+            <div class="trade-metric sl-metric">
+              <span class="metric-label">SL</span>
+              <span id="setup-sl" class="metric-value">--</span>
+              <span id="setup-sl-pct" class="metric-pct"></span>
+            </div>
+            <div class="trade-metric tp1-metric">
+              <span class="metric-label">TP1</span>
+              <span id="setup-tp1" class="metric-value">--</span>
+              <span id="setup-tp1-pct" class="metric-pct"></span>
+            </div>
+            <div class="trade-metric tp2-metric">
+              <span class="metric-label">TP2</span>
+              <span id="setup-tp2" class="metric-value">--</span>
+              <span id="setup-tp2-pct" class="metric-pct"></span>
+            </div>
+          </div>
+          <div class="verdict-rr">
+            <span class="rr-label">R:R</span>
+            <span id="setup-rr" class="rr-value">0.0</span>
+          </div>
+        </div>
+
+        <!-- 4 LANE CARDS (Center) -->
+        <div class="dashboard-card lanes-card">
+          <div class="card-header">
+            <h3>4 Lanes</h3>
+          </div>
+          <div class="lanes-grid">
+            <!-- Lane T -->
+            <div class="lane-card lane-technical" id="lane-T">
+              <div class="lane-header">
+                <div class="lane-icon">T</div>
+                <div class="lane-info">
+                  <div class="lane-name">Technical</div>
+                  <div class="lane-sub">Lane</div>
+                </div>
+              </div>
+              <div class="lane-bias">
+                <span id="lane-T-bias" class="bias-text">--</span>
+                <span id="lane-T-tier" class="lane-tier">--</span>
+              </div>
+              <div id="lane-T-detail" class="lane-detail">--</div>
+            </div>
+            <!-- Lane F -->
+            <div class="lane-card lane-flow" id="lane-F">
+              <div class="lane-header">
+                <div class="lane-icon">F</div>
+                <div class="lane-info">
+                  <div class="lane-name">Flow</div>
+                  <div class="lane-sub">Lane</div>
+                </div>
+              </div>
+              <div class="lane-bias">
+                <span id="lane-F-bias" class="bias-text">--</span>
+                <span id="lane-F-tier" class="lane-tier">--</span>
+              </div>
+              <div id="lane-F-detail" class="lane-detail">--</div>
+            </div>
+            <!-- Lane N -->
+            <div class="lane-card lane-narrative" id="lane-N">
+              <div class="lane-header">
+                <div class="lane-icon">N</div>
+                <div class="lane-info">
+                  <div class="lane-name">Narrative</div>
+                  <div class="lane-sub">Lane</div>
+                </div>
+              </div>
+              <div class="lane-bias">
+                <span id="lane-N-bias" class="bias-text">--</span>
+                <span id="lane-N-tier" class="lane-tier">--</span>
+              </div>
+              <div id="lane-N-detail" class="lane-detail">--</div>
+            </div>
+            <!-- Lane M -->
+            <div class="lane-card lane-macro" id="lane-M">
+              <div class="lane-header">
+                <div class="lane-icon">M</div>
+                <div class="lane-info">
+                  <div class="lane-name">Macro</div>
+                  <div class="lane-sub">Lane</div>
+                </div>
+              </div>
+              <div class="lane-bias">
+                <span id="lane-M-bias" class="bias-text">--</span>
+                <span id="lane-M-tier" class="lane-tier">--</span>
+              </div>
+              <div id="lane-M-detail" class="lane-detail">--</div>
+            </div>
+          </div>
+        </div>
+
+        <!-- REASONS + STATS (Right) -->
+        <div class="dashboard-card details-card">
+          <div class="tabs-header">
+            <button class="tab-btn active" data-tab="signals">Signals</button>
+            <button class="tab-btn" data-tab="alerts">Alert Log</button>
+          </div>
+          
+          <div id="tab-signals" class="tab-content active">
+            <ul id="reasons-list" class="reasons-list"></ul>
+            <div class="stats-divider"></div>
+            <table class="metrics-table">
+              <tbody>
+                <tr><td>Price</td><td id="val-price" class="val font-mono">--</td></tr>
+                <tr><td>RSI (14)</td><td id="val-rsi" class="val font-mono">--</td></tr>
+                <tr><td>MACD</td><td id="val-macd" class="val font-mono">--</td></tr>
+                <tr>
+                  <td>EMA 9 / 21</td>
+                  <td class="val font-mono">
+                    <span id="val-ema9" class="orange-text">--</span> / 
+                    <span id="val-ema21" class="blue-text">--</span>
+                  </td>
+                </tr>
+                <tr>
+                  <td>EMA 50 / 200</td>
+                  <td class="val font-mono">
+                    <span id="val-ema50" class="purple-text">--</span> / 
+                    <span id="val-ema200" class="pink-text">--</span>
+                  </td>
+                </tr>
+                <tr><td>Bollinger</td><td id="val-bb" class="val font-mono">--</td></tr>
+                <tr><td>ATR (14)</td><td id="val-atr" class="val font-mono">--</td></tr>
+              </tbody>
+            </table>
+          </div>
+
+          <div id="tab-alerts" class="tab-content">
+            <ul id="alerts-log" class="alerts-log">
+              <li class="empty-log">No entry alerts yet. Watching markets...</li>
+            </ul>
+          </div>
+        </div>
+      </section>
+
+      <footer class="footer">
+        <p>⚠️ Disclaimer: This tool uses automated technical analysis (RSI, EMA, MACD, BB, ATR), derivatives flow data (Funding, OI, L/S Ratio), and sentiment indices. None of these constitute financial advice. Cryptocurrencies are highly volatile; trade at your own risk.</p>
+      </footer>
+    </main>
+  </div>
+
+  <script type="module" src="./src/main.js"></script>
+</body>
+</html>
