@@ -26,9 +26,10 @@
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Outfit:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600;700&display=swap" rel="stylesheet">
 </head>
 <body>
+  <div id="sidebar-backdrop" class="sidebar-backdrop"></div>
   <div class="app-container">
     <!-- Sidebar Controls -->
-    <aside class="sidebar">
+    <aside class="sidebar" id="sidebar">
       <div class="brand">
         <span class="brand-logo">⚡</span>
         <h1>Antigravity <span class="brand-accent">Trades</span></h1>
@@ -129,6 +130,7 @@
     <main class="main-content">
       <!-- Top Ticker Bar -->
       <header class="ticker-bar">
+        <button id="sidebar-toggle" class="sidebar-toggle-btn" aria-label="Toggle Sidebar">☰</button>
         <div class="ticker-info">
           <h2 id="header-symbol">BTC/USDT</h2>
           <div class="price-display">

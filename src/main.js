@@ -66,6 +66,9 @@ const CHART_COLORS = {
 // DOM Elements
 const els = {
   // Sidebar
+  sidebar: document.getElementById('sidebar'),
+  sidebarToggle: document.getElementById('sidebar-toggle'),
+  sidebarBackdrop: document.getElementById('sidebar-backdrop'),
   watchlist: document.getElementById('watchlist'),
   timeframes: document.getElementById('timeframes'),
   toggles: document.querySelectorAll('.indicator-toggle'),
@@ -178,12 +181,41 @@ function initUI() {
     </div>
   `).join('');
 
+  const closeSidebarOnMobile = () => {
+    if (window.innerWidth <= 1024) {
+      if (els.sidebar) els.sidebar.classList.remove('open');
+      if (els.sidebarBackdrop) els.sidebarBackdrop.classList.remove('open');
+      setTimeout(() => {
+        if (chartInstance) {
+          chartInstance.resize(els.chartContainer.clientWidth, els.chartContainer.clientHeight);
+        }
+      }, 300);
+    }
+  };
+
+  if (els.sidebarToggle && els.sidebarBackdrop) {
+    els.sidebarToggle.addEventListener('click', () => {
+      const isOpen = els.sidebar.classList.toggle('open');
+      els.sidebarBackdrop.classList.toggle('open', isOpen);
+      setTimeout(() => {
+        if (chartInstance) {
+          chartInstance.resize(els.chartContainer.clientWidth, els.chartContainer.clientHeight);
+        }
+      }, 300);
+    });
+
+    els.sidebarBackdrop.addEventListener('click', () => {
+      closeSidebarOnMobile();
+    });
+  }
+
   els.watchlist.querySelectorAll('.watchlist-item').forEach(el => {
     el.addEventListener('click', () => {
       els.watchlist.querySelectorAll('.watchlist-item').forEach(e => e.classList.remove('active'));
       el.classList.add('active');
       currentSymbol = el.dataset.symbol;
       loadSymbolData(currentSymbol, currentInterval);
+      closeSidebarOnMobile();
     });
   });
 
@@ -200,6 +232,7 @@ function initUI() {
       el.classList.add('active');
       currentInterval = el.dataset.interval;
       loadSymbolData(currentSymbol, currentInterval);
+      closeSidebarOnMobile();
     });
   });
 
