@@ -879,11 +879,12 @@ body {
    ════════════════════════════════════════ */
 @media (max-width: 1024px) {
   /* Body scrollable on mobile/tablet */
-  body {
+  html, body {
     overflow-x: hidden;
     overflow-y: auto;
     height: auto;
     min-height: 100vh;
+    min-height: 100dvh;
   }
 
   /* Full-width single-column layout */
