@@ -68,6 +68,7 @@ const els = {
   // Sidebar
   sidebar: document.getElementById('sidebar'),
   sidebarToggle: document.getElementById('sidebar-toggle'),
+  sidebarClose: document.getElementById('sidebar-close'),
   sidebarBackdrop: document.getElementById('sidebar-backdrop'),
   watchlist: document.getElementById('watchlist'),
   timeframes: document.getElementById('timeframes'),
@@ -205,6 +206,12 @@ function initUI() {
     });
 
     els.sidebarBackdrop.addEventListener('click', () => {
+      closeSidebarOnMobile();
+    });
+  }
+
+  if (els.sidebarClose) {
+    els.sidebarClose.addEventListener('click', () => {
       closeSidebarOnMobile();
     });
   }
@@ -426,10 +433,17 @@ function initChart() {
     }
   });
 
-  // Handle window resize
-  window.addEventListener('resize', () => {
-    chartInstance.resize(els.chartContainer.clientWidth, els.chartContainer.clientHeight);
+  // Handle container resize with ResizeObserver (handles mobile orientation + dynamic layouts)
+  let resizeTimer;
+  const resizeObserver = new ResizeObserver(() => {
+    clearTimeout(resizeTimer);
+    resizeTimer = setTimeout(() => {
+      if (chartInstance && els.chartContainer.clientWidth > 0 && els.chartContainer.clientHeight > 0) {
+        chartInstance.resize(els.chartContainer.clientWidth, els.chartContainer.clientHeight);
+      }
+    }, 50);
   });
+  resizeObserver.observe(els.chartContainer);
 }
 
 // ──────────────────────────────────────────────────
