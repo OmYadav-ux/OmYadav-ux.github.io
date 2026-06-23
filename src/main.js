@@ -97,9 +97,7 @@ const els = {
   atrInput: document.getElementById('atrMultiplier'),
   atrVal: document.getElementById('atrMultiplierVal'),
   rrInput: document.getElementById('riskRewardRatio'),
-  rrVal: document.getElementById('riskRewardRatioVal'),
-  toggleTheme: document.getElementById('toggle-theme'),
-  themeToggleLabel: document.getElementById('theme-toggle-label'),
+  themeToggleBtn: document.getElementById('theme-toggle-btn'),
   
   // Header
   hSymbol: document.getElementById('header-symbol'),
@@ -159,7 +157,17 @@ const els = {
   // Tab panels and logs
   tabBtns: document.querySelectorAll('.tab-btn'),
   tabContents: document.querySelectorAll('.tab-content'),
-  alertsLog: document.getElementById('alerts-log')
+  alertsLog: document.getElementById('alerts-log'),
+  
+  // Login Gatekeeper Elements
+  loginOverlay: document.getElementById('login-overlay'),
+  loginCard: document.querySelector('.login-card'),
+  loginForm: document.getElementById('login-form'),
+  usernameInput: document.getElementById('username'),
+  passwordInput: document.getElementById('password'),
+  togglePwVisibility: document.getElementById('toggle-pw-visibility'),
+  loginError: document.getElementById('login-error'),
+  appContainer: document.querySelector('.app-container')
 };
 
 // Formatting utilities
@@ -192,6 +200,65 @@ async function initApp() {
     updateFngHeader(fngDataCache);
     if (chartData.length > 0) runAnalysis();
   }, 60000); // every minute
+}
+
+// ──────────────────────────────────────────────────
+// GATEKEEPER AUTHENTICATION
+// ──────────────────────────────────────────────────
+function initGatekeeper() {
+  const isAuth = sessionStorage.getItem('apex_auth') === 'true';
+  
+  // If already authenticated during this tab session, unlock instantly
+  if (isAuth) {
+    els.appContainer.classList.remove('blur-active');
+    els.loginOverlay.classList.add('hidden');
+    initApp();
+    return;
+  }
+
+  // Toggle Password Visibility
+  if (els.togglePwVisibility) {
+    els.togglePwVisibility.addEventListener('click', () => {
+      const type = els.passwordInput.getAttribute('type') === 'password' ? 'text' : 'password';
+      els.passwordInput.setAttribute('type', type);
+      els.togglePwVisibility.textContent = type === 'password' ? '👁️' : '🙈';
+    });
+  }
+
+  // Handle Form Submission
+  if (els.loginForm) {
+    els.loginForm.addEventListener('submit', (e) => {
+      e.preventDefault();
+      
+      const username = els.usernameInput.value.trim();
+      const password = els.passwordInput.value;
+      
+      // Credentials Check
+      if (username === 'omboss4' && password === 'OmYadav@0204') {
+        sessionStorage.setItem('apex_auth', 'true');
+        
+        // Success Transition
+        els.loginOverlay.classList.add('hidden');
+        els.appContainer.classList.remove('blur-active');
+        
+        // Initialize Application fully
+        initApp();
+      } else {
+        // Error Feedback: Shake and Display warning
+        els.loginError.classList.remove('hidden');
+        els.loginCard.classList.add('shake');
+        
+        // Clear password input
+        els.passwordInput.value = '';
+        els.passwordInput.focus();
+        
+        // Remove shake animation class after completion to allow re-trigger
+        setTimeout(() => {
+          els.loginCard.classList.remove('shake');
+        }, 400);
+      }
+    });
+  }
 }
 
 function initUI() {
@@ -397,9 +464,9 @@ function initUI() {
   });
 
   // Theme Toggle Listener
-  if (els.toggleTheme) {
-    els.toggleTheme.addEventListener('change', (e) => {
-      const newTheme = e.target.checked ? 'light' : 'dark';
+  if (els.themeToggleBtn) {
+    els.themeToggleBtn.addEventListener('click', () => {
+      const newTheme = currentTheme === 'light' ? 'dark' : 'light';
       applyTheme(newTheme);
     });
   }
@@ -414,12 +481,10 @@ function applyTheme(theme) {
 
   if (theme === 'light') {
     document.body.classList.add('light-theme');
-    if (els.toggleTheme) els.toggleTheme.checked = true;
-    if (els.themeToggleLabel) els.themeToggleLabel.innerHTML = 'Light Mode ☀️';
+    if (els.themeToggleBtn) els.themeToggleBtn.innerHTML = '☀️';
   } else {
     document.body.classList.remove('light-theme');
-    if (els.toggleTheme) els.toggleTheme.checked = false;
-    if (els.themeToggleLabel) els.themeToggleLabel.innerHTML = 'Dark Mode 🌙';
+    if (els.themeToggleBtn) els.themeToggleBtn.innerHTML = '🌙';
   }
 
   // Update chart elements if initialized
@@ -803,7 +868,7 @@ function renderDashboard(result) {
 }
 
 // Start
-initApp();
+initGatekeeper();
 
 // ──────────────────────────────────────────────────
 // ALERTS & NOTIFICATIONS HELPERS

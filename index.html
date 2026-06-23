@@ -26,8 +26,34 @@
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Outfit:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600;700&display=swap" rel="stylesheet">
 </head>
 <body>
+  <!-- Login Gatekeeper Overlay -->
+  <div id="login-overlay" class="login-overlay">
+    <div class="login-card">
+      <div class="login-brand">
+        <span class="login-logo">⚡</span>
+        <h2>APEX <span class="brand-accent">GO</span></h2>
+        <p>4-Lane Trading Intelligence</p>
+      </div>
+      <form id="login-form" class="login-form">
+        <div class="input-group">
+          <label for="username">Username</label>
+          <input type="text" id="username" autocomplete="username" placeholder="Enter username" required>
+        </div>
+        <div class="input-group">
+          <label for="password">Password</label>
+          <div class="password-wrapper">
+            <input type="password" id="password" autocomplete="current-password" placeholder="Enter password" required>
+            <button type="button" id="toggle-pw-visibility" class="toggle-pw-btn" aria-label="Toggle Password Visibility">👁️</button>
+          </div>
+        </div>
+        <div id="login-error" class="login-error hidden">❌ Invalid credentials. Please try again.</div>
+        <button type="submit" id="btn-login" class="login-btn">Unlock Terminal 🔑</button>
+      </form>
+    </div>
+  </div>
+
   <div id="sidebar-backdrop" class="sidebar-backdrop"></div>
-  <div class="app-container">
+  <div class="app-container blur-active">
     <!-- Sidebar Controls -->
     <aside class="sidebar" id="sidebar">
       <div class="brand">
@@ -121,17 +147,6 @@
         </div>
       </div>
 
-      <div class="sidebar-section">
-        <h3>Theme Mode</h3>
-        <div class="toggle-container">
-          <label class="toggle-switch">
-            <input type="checkbox" id="toggle-theme">
-            <span class="slider"></span>
-            <span class="label-text" id="theme-toggle-label">Dark Mode 🌙</span>
-          </label>
-        </div>
-      </div>
-
       <div class="connection-status">
         <span class="status-indicator"></span>
         <span class="status-text">Binance Live Feed Active</span>
@@ -167,6 +182,7 @@
             <span id="header-fng" class="stat-val fng-val">--</span>
           </div>
         </div>
+        <button id="theme-toggle-btn" class="theme-toggle-btn" aria-label="Toggle Theme">🌙</button>
       </header>
 
       <!-- Chart Window -->
