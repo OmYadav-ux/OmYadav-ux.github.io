@@ -47,7 +47,9 @@ let tgChatId = localStorage.getItem('tg_chat_id') || '';
 // Load Cancellation token for race conditions
 let currentLoadRequestId = 0;
 
-// Chart configuration constants
+// Theme & Chart configuration constants
+let currentTheme = localStorage.getItem('theme') || 'dark';
+
 const CHART_COLORS = {
   bg: '#080c14',
   text: '#64748b',
@@ -63,6 +65,25 @@ const CHART_COLORS = {
   bb: 'rgba(255, 255, 255, 0.15)'
 };
 
+const LIGHT_CHART_COLORS = {
+  bg: '#ffffff',
+  text: '#475569',
+  grid: 'rgba(203, 213, 225, 0.5)',
+  up: '#059669',
+  down: '#dc2626',
+  volUp: 'rgba(5, 150, 105, 0.3)',
+  volDown: 'rgba(220, 38, 38, 0.3)',
+  ema9: '#d97706',
+  ema21: '#2563eb',
+  ema50: '#7c3aed',
+  ema200: '#db2777',
+  bb: 'rgba(15, 23, 42, 0.12)'
+};
+
+function getColors() {
+  return currentTheme === 'light' ? LIGHT_CHART_COLORS : CHART_COLORS;
+}
+
 // DOM Elements
 const els = {
   // Sidebar
@@ -77,6 +98,8 @@ const els = {
   atrVal: document.getElementById('atrMultiplierVal'),
   rrInput: document.getElementById('riskRewardRatio'),
   rrVal: document.getElementById('riskRewardRatioVal'),
+  toggleTheme: document.getElementById('toggle-theme'),
+  themeToggleLabel: document.getElementById('theme-toggle-label'),
   
   // Header
   hSymbol: document.getElementById('header-symbol'),
@@ -152,6 +175,9 @@ const fmt = {
 async function initApp() {
   initUI();
   initChart();
+  
+  // Set initial theme
+  applyTheme(currentTheme);
   
   // Pre-fetch slow data once
   fngDataCache = await fetchFearGreedIndex();
@@ -370,38 +396,114 @@ function initUI() {
     });
   });
 
+  // Theme Toggle Listener
+  if (els.toggleTheme) {
+    els.toggleTheme.addEventListener('change', (e) => {
+      const newTheme = e.target.checked ? 'light' : 'dark';
+      applyTheme(newTheme);
+    });
+  }
+
   // Render initial logs
   renderAlertLog();
 }
 
+function applyTheme(theme) {
+  currentTheme = theme;
+  localStorage.setItem('theme', theme);
+
+  if (theme === 'light') {
+    document.body.classList.add('light-theme');
+    if (els.toggleTheme) els.toggleTheme.checked = true;
+    if (els.themeToggleLabel) els.themeToggleLabel.innerHTML = 'Light Mode ☀️';
+  } else {
+    document.body.classList.remove('light-theme');
+    if (els.toggleTheme) els.toggleTheme.checked = false;
+    if (els.themeToggleLabel) els.themeToggleLabel.innerHTML = 'Dark Mode 🌙';
+  }
+
+  // Update chart elements if initialized
+  if (chartInstance) {
+    const colors = getColors();
+    chartInstance.applyOptions({
+      layout: {
+        background: { type: 'solid', color: colors.bg },
+        textColor: colors.text,
+      },
+      grid: {
+        vertLines: { color: colors.grid },
+        horzLines: { color: colors.grid },
+      },
+      rightPriceScale: {
+        borderColor: colors.grid,
+      },
+      timeScale: {
+        borderColor: colors.grid,
+      }
+    });
+
+    if (candleSeries) {
+      candleSeries.applyOptions({
+        upColor: colors.up,
+        downColor: colors.down,
+        wickUpColor: colors.up,
+        wickDownColor: colors.down,
+      });
+    }
+
+    if (indicatorSeries.ema9) indicatorSeries.ema9.applyOptions({ color: colors.ema9 });
+    if (indicatorSeries.ema21) indicatorSeries.ema21.applyOptions({ color: colors.ema21 });
+    if (indicatorSeries.ema50) indicatorSeries.ema50.applyOptions({ color: colors.ema50 });
+    if (indicatorSeries.ema200) indicatorSeries.ema200.applyOptions({ color: colors.ema200 });
+
+    if (indicatorSeries.bbUpper) indicatorSeries.bbUpper.applyOptions({ color: colors.bb });
+    if (indicatorSeries.bbLower) indicatorSeries.bbLower.applyOptions({ color: colors.bb });
+
+    // Update volume bars color
+    if (volumeSeries && chartData.length > 0) {
+      volumeSeries.setData(chartData.map(c => ({
+        time: c.time,
+        value: c.volume,
+        color: c.close >= c.open ? colors.volUp : colors.volDown
+      })));
+    }
+  }
+
+  // Update fear & greed index color if active
+  if (fngDataCache) {
+    updateFngHeader(fngDataCache);
+  }
+}
+
 function initChart() {
+  const colors = getColors();
   chartInstance = createChart(els.chartContainer, {
     layout: {
-      background: { type: 'solid', color: CHART_COLORS.bg },
-      textColor: CHART_COLORS.text,
+      background: { type: 'solid', color: colors.bg },
+      textColor: colors.text,
       fontFamily: 'JetBrains Mono',
     },
     grid: {
-      vertLines: { color: CHART_COLORS.grid, style: 1 },
-      horzLines: { color: CHART_COLORS.grid, style: 1 },
+      vertLines: { color: colors.grid, style: 1 },
+      horzLines: { color: colors.grid, style: 1 },
     },
     crosshair: { mode: CrosshairMode.Normal },
     rightPriceScale: { 
-      borderColor: CHART_COLORS.grid,
+      borderColor: colors.grid,
       scaleMargins: {
         top: 0.1, // 10% margin at the top
         bottom: 0.3 // 30% margin at the bottom (leaves room for volume)
       }
     },
-    timeScale: { borderColor: CHART_COLORS.grid, timeVisible: true },
+    timeScale: { borderColor: colors.grid, timeVisible: true },
   });
 
   candleSeries = chartInstance.addCandlestickSeries({
-    upColor: CHART_COLORS.up,
-    downColor: CHART_COLORS.down,
+    upColor: colors.up,
+    downColor: colors.down,
     borderVisible: false,
-    wickUpColor: CHART_COLORS.up,
-    wickDownColor: CHART_COLORS.down,
+    wickUpColor: colors.up,
+    wickDownColor: colors.down,
   });
 
   volumeSeries = chartInstance.addHistogramSeries({
@@ -417,13 +519,13 @@ function initChart() {
   });
 
   // Technical Indicators
-  indicatorSeries.ema9 = chartInstance.addLineSeries({ color: CHART_COLORS.ema9, lineWidth: 1, title: 'EMA 9' });
-  indicatorSeries.ema21 = chartInstance.addLineSeries({ color: CHART_COLORS.ema21, lineWidth: 2, title: 'EMA 21' });
-  indicatorSeries.ema50 = chartInstance.addLineSeries({ color: CHART_COLORS.ema50, lineWidth: 1, visible: false, title: 'EMA 50' });
-  indicatorSeries.ema200 = chartInstance.addLineSeries({ color: CHART_COLORS.ema200, lineWidth: 2, visible: false, title: 'EMA 200' });
+  indicatorSeries.ema9 = chartInstance.addLineSeries({ color: colors.ema9, lineWidth: 1, title: 'EMA 9' });
+  indicatorSeries.ema21 = chartInstance.addLineSeries({ color: colors.ema21, lineWidth: 2, title: 'EMA 21' });
+  indicatorSeries.ema50 = chartInstance.addLineSeries({ color: colors.ema50, lineWidth: 1, visible: false, title: 'EMA 50' });
+  indicatorSeries.ema200 = chartInstance.addLineSeries({ color: colors.ema200, lineWidth: 2, visible: false, title: 'EMA 200' });
   
-  indicatorSeries.bbUpper = chartInstance.addLineSeries({ color: CHART_COLORS.bb, lineWidth: 1, lineStyle: 2, title: 'BB Upper' });
-  indicatorSeries.bbLower = chartInstance.addLineSeries({ color: CHART_COLORS.bb, lineWidth: 1, lineStyle: 2, title: 'BB Lower' });
+  indicatorSeries.bbUpper = chartInstance.addLineSeries({ color: colors.bb, lineWidth: 1, lineStyle: 2, title: 'BB Upper' });
+  indicatorSeries.bbLower = chartInstance.addLineSeries({ color: colors.bb, lineWidth: 1, lineStyle: 2, title: 'BB Lower' });
 
   // Sync toggles state
   els.toggles.forEach(toggle => {
@@ -485,7 +587,7 @@ async function loadSymbolData(symbol, interval) {
     volumeSeries.setData(chartData.map(c => ({
       time: c.time,
       value: c.volume,
-      color: c.close >= c.open ? CHART_COLORS.volUp : CHART_COLORS.volDown
+      color: c.close >= c.open ? getColors().volUp : getColors().volDown
     })));
     
     // Calculate and draw historical indicators ONCE
@@ -510,7 +612,7 @@ async function loadSymbolData(symbol, interval) {
       volumeSeries.update({
         time: update.time,
         value: update.volume,
-        color: update.close >= update.open ? CHART_COLORS.volUp : CHART_COLORS.volDown
+        color: update.close >= update.open ? getColors().volUp : getColors().volDown
       });
 
       const result = runAnalysis(); // Re-run analysis on every tick
@@ -558,9 +660,10 @@ function updateHeaderStats(ticker) {
 function updateFngHeader(fngData) {
   if (!fngData) return;
   els.hFng.textContent = `${fngData.value} · ${fngData.classification}`;
-  if (fngData.value >= 60) els.hFng.style.color = CHART_COLORS.up;
-  else if (fngData.value <= 40) els.hFng.style.color = CHART_COLORS.down;
-  else els.hFng.style.color = CHART_COLORS.text;
+  const colors = getColors();
+  if (fngData.value >= 60) els.hFng.style.color = colors.up;
+  else if (fngData.value <= 40) els.hFng.style.color = colors.down;
+  else els.hFng.style.color = colors.text;
 }
 
 // ──────────────────────────────────────────────────
