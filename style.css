@@ -120,15 +120,11 @@ body {
   align-items: center;
   gap: var(--spacing-sm);
 }
-.brand-logo {
-  font-size: 22px;
-  filter: drop-shadow(0 0 8px var(--lane-t));
-}
 .brand h1 {
-  font-family: var(--font-display);
-  font-size: 18px;
-  font-weight: 800;
-  letter-spacing: -0.5px;
+  font-family: 'Rye', serif;
+  font-size: 20px;
+  font-weight: 400;
+  letter-spacing: 0.5px;
 }
 .brand-accent {
   background: linear-gradient(135deg, var(--lane-t), var(--accent-purple));
@@ -1479,10 +1475,10 @@ body.light-theme .login-card {
 }
 
 .login-brand h2 {
-  font-family: var(--font-display);
-  font-size: 24px;
-  font-weight: 800;
-  letter-spacing: -0.5px;
+  font-family: 'Rye', serif;
+  font-size: 28px;
+  font-weight: 400;
+  letter-spacing: 1px;
   color: var(--text-primary);
 }
 
